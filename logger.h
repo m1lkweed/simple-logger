@@ -102,6 +102,7 @@ void _logger_init(void){
 #endif
 
 int logger(enum log_levels level, const char *msg){
+	fflush(logfile);
 	if(level < log_level || logfile == NULL || level == NONE)
 		return -1;
 
@@ -126,6 +127,7 @@ int logger(enum log_levels level, const char *msg){
 }
 
 int loggerf(enum log_levels level, const char *fmt, ...){
+	fflush(logfile);
 	if(level < log_level || logfile == NULL || level == NONE)
 		return -1;
 
