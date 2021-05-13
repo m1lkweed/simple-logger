@@ -93,6 +93,14 @@ const char *log_level_names[] = {
 enum log_levels log_level = WARN;
 FILE *logfile = NULL;
 
+#ifdef __GNUC__
+// sets logfile before main() runs, in case someone forgets to set it manually
+void _logger_init(void) __attribute__((constructor));
+void _logger_init(void){
+	logfile = stderr;
+}
+#endif
+
 int logger(enum log_levels level, const char *msg){
 	if(level < log_level || logfile == NULL || level == NONE)
 		return -1;
