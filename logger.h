@@ -8,8 +8,8 @@
 // These values are also valid for logger()
 // logger() returns -1 if no logging occurs, 0 if logging does occur
 
-#ifndef _LOG_H_
-#define _LOG_H_
+#ifndef LOG_H_
+#define LOG_H_
 
 #include <time.h>
 #include <stdio.h>
@@ -94,7 +94,6 @@ enum log_levels log_level = WARN;
 FILE *logfile = NULL;
 
 #ifdef __GNUC__
-// sets logfile before main() runs, in case someone forgets to set it manually
 void _logger_init(void) __attribute__((constructor));
 void _logger_init(void){
 	logfile = stderr;
@@ -155,4 +154,4 @@ int loggerf(enum log_levels level, const char *fmt, ...){
 
 #undef LOG_STR
 #undef LOG_STR1
-#endif //_LOG_H_
+#endif // LOG_H_

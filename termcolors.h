@@ -1,5 +1,5 @@
-#ifndef _TERMINAL_COLORS_H
-#define _TERMINAL_COLORS_H
+#ifndef TERMINAL_COLORS_H
+#define TERMINAL_COLORS_H
 #define ANSI_RESET      "\x1b[0m"
 #define ANSI_BOLD       "\x1b[1m"
 #define ANSI_DARK       "\x1b[2m"
@@ -25,4 +25,4 @@
 #define ANSI_BG_MAGENTA "\x1b[45m"
 #define ANSI_BG_CYAN    "\x1b[46m"
 #define ANSI_BG_WHITE   "\x1b[47m"
-#endif //_TERMINAL_COLORS_H
+#endif // TERMINAL_COLORS_H
