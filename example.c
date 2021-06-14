@@ -3,9 +3,6 @@
 
 int main(){
 	log_level = WARN;
-	#ifndef __GNUC__
-	pthread_mutex_init(&_logger_mutex, NULL);
-	#endif //__GNUC__
 	logfile = stdout;
 	loggerf(ALL, "Only showing messages of level %s or higher.", log_level_names[log_level]);
 	logger(ALL,   "Message!");
