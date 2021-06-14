@@ -16,6 +16,11 @@
 #include <stdarg.h>
 #include <string.h>
 
+#if defined(_REENTRANT) && defined(__GNUC__)
+#include <pthread.h>
+pthread_mutex_t _logger_mutex;
+#endif //_REENTRANT
+
 #ifdef _WIN32
 #include <io.h>
 #define isatty _isatty
@@ -26,9 +31,6 @@
 #endif
 
 #include "termcolors.h"
-
-#define LOG_STR1(x) #x
-#define LOG_STR(x) LOG_STR1(x)
 
 enum log_levels{
 	ALL,
@@ -45,7 +47,7 @@ enum log_levels{
 	NONE
 };
 
-const char *log_colors[] = {
+static const char *log_colors[] = {
 	ANSI_BOLD ANSI_GREY,
 	ANSI_CYAN,
 	ANSI_BOLD ANSI_CYAN,
@@ -60,7 +62,7 @@ const char *log_colors[] = {
 	""
 };
 
-const char *log_text_colors[] = {
+static const char *log_text_colors[] = {
 	ANSI_RESET,
 	ANSI_RESET,
 	ANSI_RESET,
@@ -75,7 +77,7 @@ const char *log_text_colors[] = {
 	""
 };
 
-const char *log_level_names[] = {
+static const char *log_level_names[] = {
 	"       ",
 	"[TRACE]",
 	"[SPAM] ",
@@ -90,17 +92,30 @@ const char *log_level_names[] = {
 	""
 };
 
-enum log_levels log_level = WARN;
+static enum log_levels log_level = WARN;
+extern FILE *logfile;
+
+#ifdef LOGGER_IMPLEMENTATION
+
+#define LOG_STR1(x) #x
+#define LOG_STR(x) LOG_STR1(x)
+
 FILE *logfile = NULL;
 
 #ifdef __GNUC__
 void _logger_init(void) __attribute__((constructor));
 void _logger_init(void){
 	logfile = stderr;
+	#if defined(_REENTRANT) && defined(__GNUC__) //defined by -pthread flag
+	pthread_mutex_init(&_logger_mutex, NULL);
+	#endif // _REENTRANT
 }
 #endif
 
 int logger(enum log_levels level, const char *msg){
+	#if defined(_REENTRANT) && defined(__GNUC__)
+	pthread_mutex_lock(&_logger_mutex);
+	#endif // _REENTRANT
 	fflush(logfile);
 	if(level < log_level || logfile == NULL || level == NONE)
 		return -1;
@@ -113,19 +128,25 @@ int logger(enum log_levels level, const char *msg){
 	int logfd = fileno(logfile);
 	int tty = isatty(logfd); // don't print colored outputs to non-terminals
 
-	if(tty)write(logfd, log_colors[level], strlen(log_colors[level]));
-	write(logfd, time_str, strlen(time_str));
-	write(logfd, " ", 1);
-	write(logfd, log_level_names[level], strlen(log_level_names[level]));
-	if(tty)write(logfd, log_text_colors[level], strlen(log_text_colors[level]));
-	write(logfd, " ", 1);
-	write(logfd, msg, strlen(msg));
-	if(tty)write(logfd, ANSI_RESET"\n", strlen(ANSI_RESET"\n"));
-	else write(logfd, "\n", 1);
+	if(tty)fputs(log_colors[level], logfile);
+	fputs(time_str, logfile);
+	fputs(" ", logfile);
+	fputs(log_level_names[level], logfile);
+	if(tty)fputs(log_text_colors[level], logfile);
+	fputs(" ", logfile);
+	fputs(msg, logfile);
+	if(tty)fputs(ANSI_RESET"\n", logfile);
+	else fputs("\n", logfile);
+	#if defined(_REENTRANT) && defined(__GNUC__)
+	pthread_mutex_unlock(&_logger_mutex);
+	#endif // _REENTRANT
 	return 0;
 }
 
 int loggerf(enum log_levels level, const char *fmt, ...){
+	#if defined(_REENTRANT) && defined(__GNUC__)
+	pthread_mutex_trylock(&_logger_mutex);
+	#endif // _REENTRANT
 	fflush(logfile);
 	if(level < log_level || logfile == NULL || level == NONE)
 		return -1;
@@ -149,9 +170,13 @@ int loggerf(enum log_levels level, const char *fmt, ...){
 	va_end(args);
 	if(tty)fputs(ANSI_RESET"\n", logfile);
 	else fputs("\n", logfile);
+	#if defined(_REENTRANT) && defined(__GNUC__)
+	pthread_mutex_unlock(&_logger_mutex);
+	#endif // _REENTRANT
 	return 0;
 }
 
 #undef LOG_STR
 #undef LOG_STR1
+#endif // LOGGER_IMPLEMENTATION
 #endif // LOG_H_
