@@ -16,9 +16,10 @@
 #include <stdarg.h>
 #include <string.h>
 
-#if defined(_REENTRANT) && defined(__GNUC__)
+#ifdef _REENTRANT
 #include <pthread.h>
-pthread_mutex_t _logger_mutex;
+extern pthread_mutex_t _logger_mutex;
+extern _Atomic bool _logger_mutex_init_flag;
 #endif //_REENTRANT
 
 #ifdef _WIN32
@@ -100,25 +101,33 @@ extern FILE *logfile;
 #define LOG_STR1(x) #x
 #define LOG_STR(x) LOG_STR1(x)
 
+#ifdef _REENTRANT
+pthread_mutex_t _logger_mutex;
+_Atomic bool _logger_mutex_init_flag;
+#endif //_REENTRANT
+
 FILE *logfile = NULL;
 
 #ifdef __GNUC__
 void _logger_init(void) __attribute__((constructor));
 void _logger_init(void){
 	logfile = stderr;
-	#if defined(_REENTRANT) && defined(__GNUC__) //defined by -pthread flag
+	#ifdef _REENTRANT //defined by -pthread flag
 	pthread_mutex_init(&_logger_mutex, NULL);
+	_logger_mutex_init_flag = 1;
 	#endif // _REENTRANT
 }
 #endif
 
 int logger(enum log_levels level, const char *msg){
-	#if defined(_REENTRANT) && defined(__GNUC__)
+	#ifdef _REENTRANT
+	if(!_logger_mutex_init_flag)
+		pthread_mutex_init(&_logger_mutex, NULL);
 	pthread_mutex_lock(&_logger_mutex);
 	#endif // _REENTRANT
 	fflush(logfile);
 	if((level < log_level && level != ALL)|| logfile == NULL || level == NONE){
-		#if defined(_REENTRANT) && defined(__GNUC__)
+		#ifdef _REENTRANT
 		pthread_mutex_unlock(&_logger_mutex);
 		#endif // _REENTRANT
 		return -1;
@@ -141,19 +150,21 @@ int logger(enum log_levels level, const char *msg){
 	fputs(msg, logfile);
 	if(tty)fputs(ANSI_RESET"\n", logfile);
 	else fputs("\n", logfile);
-	#if defined(_REENTRANT) && defined(__GNUC__)
+	#ifdef _REENTRANT
 	pthread_mutex_unlock(&_logger_mutex);
 	#endif // _REENTRANT
 	return 0;
 }
 
 int loggerf(enum log_levels level, const char *fmt, ...){
-	#if defined(_REENTRANT) && defined(__GNUC__)
+	#ifdef _REENTRANT
+	if(!_logger_mutex_init_flag)
+		pthread_mutex_init(&_logger_mutex, NULL);
 	pthread_mutex_lock(&_logger_mutex);
 	#endif // _REENTRANT
 	fflush(logfile);
 	if((level < log_level && level != ALL)|| logfile == NULL || level == NONE){
-		#if defined(_REENTRANT) && defined(__GNUC__)
+		#ifdef _REENTRANT
 		pthread_mutex_unlock(&_logger_mutex);
 		#endif // _REENTRANT
 		return -1;
@@ -178,7 +189,7 @@ int loggerf(enum log_levels level, const char *fmt, ...){
 	va_end(args);
 	if(tty)fputs(ANSI_RESET"\n", logfile);
 	else fputs("\n", logfile);
-	#if defined(_REENTRANT) && defined(__GNUC__)
+	#ifdef _REENTRANT
 	pthread_mutex_unlock(&_logger_mutex);
 	#endif // _REENTRANT
 	return 0;
