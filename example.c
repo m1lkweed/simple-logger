@@ -1,7 +1,11 @@
+#define LOGGER_IMPLEMENTATION
 #include "logger.h"
 
 int main(){
 	log_level = WARN;
+	#ifndef __GNUC__
+	pthread_mutex_init(&_logger_mutex, NULL);
+	#endif //__GNUC__
 	logfile = stdout;
 	logger(ALL,   "Message!");
 	logger(TRACE, "Message!");
