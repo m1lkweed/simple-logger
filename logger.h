@@ -117,8 +117,12 @@ int logger(enum log_levels level, const char *msg){
 	pthread_mutex_lock(&_logger_mutex);
 	#endif // _REENTRANT
 	fflush(logfile);
-	if(level < log_level || logfile == NULL || level == NONE)
+	if((level < log_level && level != ALL)|| logfile == NULL || level == NONE){
+		#if defined(_REENTRANT) && defined(__GNUC__)
+		pthread_mutex_unlock(&_logger_mutex);
+		#endif // _REENTRANT
 		return -1;
+	}
 
 	time_t t = time(NULL);
 	struct tm *timestruct = localtime(&t);
@@ -145,11 +149,15 @@ int logger(enum log_levels level, const char *msg){
 
 int loggerf(enum log_levels level, const char *fmt, ...){
 	#if defined(_REENTRANT) && defined(__GNUC__)
-	pthread_mutex_trylock(&_logger_mutex);
+	pthread_mutex_lock(&_logger_mutex);
 	#endif // _REENTRANT
 	fflush(logfile);
-	if(level < log_level || logfile == NULL || level == NONE)
+	if((level < log_level && level != ALL)|| logfile == NULL || level == NONE){
+		#if defined(_REENTRANT) && defined(__GNUC__)
+		pthread_mutex_unlock(&_logger_mutex);
+		#endif // _REENTRANT
 		return -1;
+	}
 
 	time_t t = time(NULL);
 	struct tm *timestruct = localtime(&t);
