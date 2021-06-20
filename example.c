@@ -1,4 +1,5 @@
 #define LOGGER_IMPLEMENTATION
+#define LOGGER_ALWAYS_COLOR 1
 #include "logger.h"
 
 int main(){

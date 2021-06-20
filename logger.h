@@ -11,6 +11,10 @@
 #ifndef LOG_H_
 #define LOG_H_
 
+#ifndef LOGGER_ALWAYS_COLOR
+#define LOGGER_ALWAYS_COLOR 0
+#endif
+
 #include <time.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -133,7 +137,8 @@ int logger(enum log_levels level, const char *msg){
 		return -1;
 	}
 
-	time_t t = time(NULL);
+	time_t t;
+	time(&t);
 	struct tm *timestruct = localtime(&t);
 	char time_str[64];
 	strftime(time_str, sizeof(time_str), "%F %T", timestruct);
@@ -141,14 +146,17 @@ int logger(enum log_levels level, const char *msg){
 	int logfd = fileno(logfile);
 	int tty = isatty(logfd); // don't print colored outputs to non-terminals
 
-	if(tty)fputs(log_colors[level], logfile);
+	if(tty || LOGGER_ALWAYS_COLOR)
+		fputs(log_colors[level], logfile);
 	fputs(time_str, logfile);
 	fputs(" ", logfile);
 	fputs(log_level_names[level], logfile);
-	if(tty)fputs(log_text_colors[level], logfile);
+	if(tty || LOGGER_ALWAYS_COLOR)
+		fputs(log_text_colors[level], logfile);
 	fputs(" ", logfile);
 	fputs(msg, logfile);
-	if(tty)fputs(ANSI_RESET"\n", logfile);
+	if(tty || LOGGER_ALWAYS_COLOR)
+		fputs(ANSI_RESET"\n", logfile);
 	else fputs("\n", logfile);
 	#ifdef _REENTRANT
 	pthread_mutex_unlock(&_logger_mutex);
@@ -179,15 +187,18 @@ int loggerf(enum log_levels level, const char *fmt, ...){
 	int tty = isatty(logfd); // don't print colored outputs to non-terminals
 	va_list args;
 	va_start(args, fmt);
-	if(tty)fputs(log_colors[level], logfile);
+	if(tty || LOGGER_ALWAYS_COLOR)
+		fputs(log_colors[level], logfile);
 	fputs(time_str, logfile);
 	fputs(" ", logfile);
 	fputs(log_level_names[level], logfile);
-	if(tty)fputs(log_text_colors[level], logfile);
+	if(tty || LOGGER_ALWAYS_COLOR)
+		fputs(log_text_colors[level], logfile);
 	fputs(" ", logfile);
 	vfprintf(logfile, fmt, args);
 	va_end(args);
-	if(tty)fputs(ANSI_RESET"\n", logfile);
+	if(tty || LOGGER_ALWAYS_COLOR)
+		fputs(ANSI_RESET"\n", logfile);
 	else fputs("\n", logfile);
 	#ifdef _REENTRANT
 	pthread_mutex_unlock(&_logger_mutex);
