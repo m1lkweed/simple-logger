@@ -19,10 +19,11 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdbool.h>
 
 #ifdef _REENTRANT
 #include <pthread.h>
-extern pthread_mutex_t _logger_mutex;
+extern __thread pthread_mutex_t _logger_mutex;
 extern _Atomic bool _logger_mutex_init_flag;
 #endif //_REENTRANT
 
@@ -106,7 +107,7 @@ extern FILE *logfile;
 #define LOG_STR(x) LOG_STR1(x)
 
 #ifdef _REENTRANT
-pthread_mutex_t _logger_mutex;
+__thread pthread_mutex_t _logger_mutex;
 _Atomic bool _logger_mutex_init_flag;
 #endif //_REENTRANT
 
@@ -139,10 +140,10 @@ int logger(enum log_levels level, const char *msg){
 
 	time_t t;
 	time(&t);
-	struct tm *timestruct;
-	localtime_r(&t, timestruct);
+	struct tm timestruct;
+	localtime_r(&t, &timestruct);
 	char time_str[64];
-	strftime(time_str, sizeof(time_str), "%F %T", timestruct);
+	strftime(time_str, sizeof(time_str), "%F %T", &timestruct);
 
 	int logfd = fileno(logfile);
 	int tty = isatty(logfd); // don't print colored outputs to non-terminals
@@ -179,11 +180,12 @@ int loggerf(enum log_levels level, const char *fmt, ...){
 		return -1;
 	}
 
-	time_t t = time(NULL);
-	struct tm *timestruct;
-	localtime_r(&t, timestruct);
+	time_t t;
+	time(&t);
+	struct tm timestruct;
+	localtime_r(&t, &timestruct);
 	char time_str[64];
-	strftime(time_str, sizeof(time_str), "%F %T", timestruct);
+	strftime(time_str, sizeof(time_str), "%F %T", &timestruct);
 
 	int logfd = fileno(logfile);
 	int tty = isatty(logfd); // don't print colored outputs to non-terminals
