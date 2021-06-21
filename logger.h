@@ -139,7 +139,8 @@ int logger(enum log_levels level, const char *msg){
 
 	time_t t;
 	time(&t);
-	struct tm *timestruct = localtime(&t);
+	struct tm *timestruct;
+	localtime_r(&t, timestruct);
 	char time_str[64];
 	strftime(time_str, sizeof(time_str), "%F %T", timestruct);
 
@@ -179,7 +180,8 @@ int loggerf(enum log_levels level, const char *fmt, ...){
 	}
 
 	time_t t = time(NULL);
-	struct tm *timestruct = localtime(&t);
+	struct tm *timestruct;
+	localtime_r(&t, timestruct);
 	char time_str[64];
 	strftime(time_str, sizeof(time_str), "%F %T", timestruct);
 

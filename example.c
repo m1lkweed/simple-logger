@@ -1,9 +1,9 @@
 #define LOGGER_IMPLEMENTATION
-#define LOGGER_ALWAYS_COLOR 1
+#define LOGGER_ALWAYS_COLOR 0
 #include "logger.h"
 
 int main(){
-	log_level = WARN;
+	log_level = ALL;
 	logfile = stdout;
 	loggerf(ALL, "Only showing messages of level %s or higher.", log_level_names[log_level]);
 	logger(ALL,   "Message!");
