@@ -16,10 +16,6 @@
 #endif
 
 #include <time.h>
-#if defined(_WIN32)
-#   define localtime_r(T,Tm) (localtime_s(Tm,T) ? NULL : Tm)
-#endif
-
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -36,6 +32,7 @@ extern _Atomic bool _logger_mutex_init_flag;
 #define isatty _isatty
 #define fileno _fileno
 #define write _write
+#define localtime_r(t,m) (localtime_s(t,m)?NULL:m)
 #else
 #include <unistd.h>
 #endif
