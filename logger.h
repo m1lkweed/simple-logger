@@ -16,6 +16,10 @@
 #endif
 
 #include <time.h>
+#if defined(_WIN32)
+#   define localtime_r(T,Tm) (localtime_s(Tm,T) ? NULL : Tm)
+#endif
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
